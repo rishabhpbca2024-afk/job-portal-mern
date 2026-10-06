@@ -21,11 +21,27 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
-    setError('');
+    const trimmedEmail = formData.email.trim().toLowerCase();
+    if (!trimmedEmail) {
+      setError('Please enter your email address');
+      setSubmitting(false);
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(trimmedEmail)) {
+      setError('Please enter a valid email address');
+      setSubmitting(false);
+      return;
+    }
+
+    if (!formData.password) {
+      setError('Please enter your password');
+      setSubmitting(false);
+      return;
+    }
 
     try {
-      const res = await login(formData.email, formData.password);
+      const res = await login(trimmedEmail, formData.password);
       const role = res.data?.role;
       if (role === 'recruiter') {
         navigate('/recruiter/dashboard');

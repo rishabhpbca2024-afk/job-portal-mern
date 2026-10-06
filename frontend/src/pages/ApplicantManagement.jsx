@@ -35,6 +35,15 @@ const ApplicantManagement = () => {
       : `https://${trimmed}`;
   };
 
+  const formatPhone = (phone) => {
+    if (!phone) return '';
+    const digits = String(phone).replace(/\D/g, '');
+    if (digits.length === 10) {
+      return `+91 ${digits.slice(0, 5)} ${digits.slice(5)}`;
+    }
+    return phone;
+  };
+
   const fetchApplicants = async () => {
     try {
       const res = await api.get(`/applications/job/${jobId}`);
@@ -156,9 +165,9 @@ const ApplicantManagement = () => {
                         {app.email || app.applicant?.email}
                       </span>
                       {app.phone && (
-                        <span className="flex items-center gap-1 font-medium text-slate-700">
+                        <span className="flex items-center gap-1 font-medium text-slate-700 font-mono">
                           <Phone className="w-3.5 h-3.5 text-sky-500" />
-                          {app.phone}
+                          {formatPhone(app.phone)}
                         </span>
                       )}
                       <span>•</span>

@@ -14,19 +14,34 @@ const applicationSchema = new mongoose.Schema(
     },
     fullName: {
       type: String,
-      default: ''
+      required: [true, 'Full name is required'],
+      trim: true,
+      minlength: [2, 'Name must be at least 2 characters'],
+      maxlength: [60, 'Name cannot exceed 60 characters']
     },
     email: {
       type: String,
-      default: ''
+      required: [true, 'Email is required'],
+      trim: true,
+      lowercase: true,
+      match: [
+        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+        'Please provide a valid email address'
+      ]
     },
     phone: {
       type: String,
-      default: ''
+      required: [true, 'Phone number is required'],
+      trim: true,
+      match: [
+        /^(?:\+91|91|0)?[6-9]\d{9}$/,
+        'Please provide a valid 10-digit mobile number'
+      ]
     },
     experience: {
       type: String,
-      default: 'Fresher'
+      required: [true, 'Experience level is required'],
+      default: 'Fresher (0-1 yr)'
     },
     portfolioUrl: {
       type: String,

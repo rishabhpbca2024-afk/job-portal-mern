@@ -130,21 +130,70 @@ const JobDetails = () => {
     setApplyError('');
     setApplySuccess('');
 
-    // Validation
-    if (!fullName.trim()) {
-      setApplyError('Please enter your full name');
+    // Comprehensive Validations
+    const trimmedName = fullName.trim();
+    if (!trimmedName || trimmedName.length < 2) {
+      setApplyError('Please enter your full name (at least 2 characters)');
+      setApplying(false);
+      return;
+    }
+    if (trimmedName.length > 60) {
+      setApplyError('Full name cannot exceed 60 characters');
+      setApplying(false);
+      return;
+    }
+    if (!/^[a-zA-Z\s.'-]+$/.test(trimmedName)) {
+      setApplyError('Full name can only contain letters, spaces, and hyphens');
       setApplying(false);
       return;
     }
 
-    if (!email.trim()) {
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail) {
       setApplyError('Please enter your contact email address');
       setApplying(false);
       return;
     }
+    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(trimmedEmail)) {
+      setApplyError('Please enter a valid email address (e.g. name@example.com)');
+      setApplying(false);
+      return;
+    }
 
-    if (!phone.trim()) {
-      setApplyError('Please enter your phone number so recruiters can reach you');
+    const cleanPhone = phone.trim().replace(/\D/g, '');
+    if (!cleanPhone) {
+      setApplyError('Please enter your 10-digit mobile number');
+      setApplying(false);
+      return;
+    }
+    if (cleanPhone.length !== 10) {
+      setApplyError(`Mobile number must be exactly 10 digits (you entered ${cleanPhone.length} digits)`);
+      setApplying(false);
+      return;
+    }
+    if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+      setApplyError('Please enter a valid Indian mobile number starting with 6, 7, 8, or 9');
+      setApplying(false);
+      return;
+    }
+
+    if (portfolioUrl && portfolioUrl.trim()) {
+      try {
+        const u = new URL(portfolioUrl.trim());
+        if (!['http:', 'https:'].includes(u.protocol)) {
+          setApplyError('Portfolio link must begin with http:// or https://');
+          setApplying(false);
+          return;
+        }
+      } catch {
+        setApplyError('Please enter a valid website URL for portfolio (e.g. https://github.com/username)');
+        setApplying(false);
+        return;
+      }
+    }
+
+    if (coverLetter && coverLetter.trim().length > 2000) {
+      setApplyError('Cover letter cannot exceed 2000 characters');
       setApplying(false);
       return;
     }
@@ -157,9 +206,9 @@ const JobDetails = () => {
 
     try {
       const formData = new FormData();
-      formData.append('fullName', fullName.trim());
-      formData.append('email', email.trim());
-      formData.append('phone', phone.trim());
+      formData.append('fullName', trimmedName);
+      formData.append('email', trimmedEmail);
+      formData.append('phone', cleanPhone);
       formData.append('experience', experience);
       formData.append('portfolioUrl', portfolioUrl.trim());
       formData.append('coverLetter', coverLetter.trim());
@@ -467,20 +516,33 @@ const JobDetails = () => {
 
                   {/* Phone Number */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                      Phone Number <span className="text-rose-500">*</span>
-                    </label>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Phone Number <span className="text-rose-500">*</span>
+                      </label>
+                      <span className={`text-[11px] font-semibold ${phone.length === 10 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                        {phone.length}/10 digits
+                      </span>
+                    </div>
                     <div className="relative">
                       <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                       <input
                         type="tel"
                         required
+                        maxLength={10}
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="+91 98765 43210"
+                        onChange={(e) => {
+                          const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10);
+                          setPhone(digitsOnly);
+                          if (applyError) setApplyError('');
+                        }}
+                        placeholder="9876543210"
                         className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-slate-50/50"
                       />
                     </div>
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Enter 10-digit mobile number (starts with 6, 7, 8, or 9)
+                    </p>
                   </div>
 
                   {/* Experience Level */}

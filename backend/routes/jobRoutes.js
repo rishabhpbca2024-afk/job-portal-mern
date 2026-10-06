@@ -23,7 +23,7 @@ router.get('/:id', getJobById);
 
 // Protected Recruiter routes: Create, Update, Delete job
 router.post('/', protect, authorize('recruiter'), validateJobInput, createJob);
-router.put('/:id', protect, authorize('recruiter'), updateJob);
+router.put('/:id', protect, authorize('recruiter'), validateJobInput, updateJob);
 router.delete('/:id', protect, authorize('recruiter'), deleteJob);
 
 module.exports = router;

@@ -60,9 +60,44 @@ const EditJob = () => {
     setSubmitting(true);
     setError('');
 
+    if (!formData.title.trim() || formData.title.trim().length < 3) {
+      setError('Job title must be at least 3 characters long');
+      setSubmitting(false);
+      return;
+    }
+
+    if (!formData.company.trim() || formData.company.trim().length < 2) {
+      setError('Company name must be at least 2 characters long');
+      setSubmitting(false);
+      return;
+    }
+
+    if (!formData.location.trim() || formData.location.trim().length < 2) {
+      setError('Job location must be at least 2 characters long');
+      setSubmitting(false);
+      return;
+    }
+
+    if (!formData.salary.trim() || formData.salary.trim().length < 2) {
+      setError('Please provide a valid salary range');
+      setSubmitting(false);
+      return;
+    }
+
+    if (!formData.description.trim() || formData.description.trim().length < 20) {
+      setError('Job description must be at least 20 characters long');
+      setSubmitting(false);
+      return;
+    }
+
     try {
       const payload = {
         ...formData,
+        title: formData.title.trim(),
+        company: formData.company.trim(),
+        location: formData.location.trim(),
+        salary: formData.salary.trim(),
+        description: formData.description.trim(),
         requirements: formData.requirements
           ? formData.requirements.split(',').map((s) => s.trim()).filter(Boolean)
           : []

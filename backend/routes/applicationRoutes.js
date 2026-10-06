@@ -9,6 +9,7 @@ const {
 const { protect } = require('../middleware/authMiddleware');
 const { authorize } = require('../middleware/roleMiddleware');
 const { uploadResume } = require('../middleware/uploadMiddleware');
+const { validateApplicationInput } = require('../validators/applicationValidator');
 
 // Middleware to handle multer upload and capture errors cleanly
 const handleResumeUpload = (req, res, next) => {
@@ -24,7 +25,7 @@ const handleResumeUpload = (req, res, next) => {
 };
 
 // Job Seeker routes
-router.post('/apply/:jobId', protect, authorize('jobseeker'), handleResumeUpload, applyJob);
+router.post('/apply/:jobId', protect, authorize('jobseeker'), handleResumeUpload, validateApplicationInput, applyJob);
 router.get('/my-applications', protect, authorize('jobseeker'), getJobSeekerApplications);
 
 // Recruiter routes

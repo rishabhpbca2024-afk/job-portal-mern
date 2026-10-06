@@ -30,10 +30,51 @@ const Register = () => {
     setSubmitting(true);
     setError('');
 
+    // Client-side validations
+    const trimmedName = formData.name.trim();
+    if (!trimmedName || trimmedName.length < 2) {
+      setError('Name must be at least 2 characters long');
+      setSubmitting(false);
+      return;
+    }
+    if (!/^[a-zA-Z\s.'-]+$/.test(trimmedName)) {
+      setError('Name can only contain alphabets, spaces, and hyphens');
+      setSubmitting(false);
+      return;
+    }
+
+    const trimmedEmail = formData.email.trim().toLowerCase();
+    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(trimmedEmail)) {
+      setError('Please provide a valid email address');
+      setSubmitting(false);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      setSubmitting(false);
+      return;
+    }
+
+    if (role === 'recruiter' && formData.companyWebsite && formData.companyWebsite.trim()) {
+      try {
+        const u = new URL(formData.companyWebsite.trim().startsWith('http') ? formData.companyWebsite.trim() : `https://${formData.companyWebsite.trim()}`);
+        if (!['http:', 'https:'].includes(u.protocol)) {
+          setError('Company website must use http:// or https://');
+          setSubmitting(false);
+          return;
+        }
+      } catch {
+        setError('Please provide a valid company website URL');
+        setSubmitting(false);
+        return;
+      }
+    }
+
     try {
       const payload = {
-        name: formData.name,
-        email: formData.email,
+        name: trimmedName,
+        email: trimmedEmail,
         password: formData.password,
         role: role
       };

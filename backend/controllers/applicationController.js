@@ -89,16 +89,18 @@ const applyJob = async (req, res, next) => {
       });
     }
 
+    const cleanedPhone = (phone || '').trim().replace(/[\s\-()]/g, '').replace(/^\+91|^91|^0/, '');
+
     // Create application
     const application = await Application.create({
       job: jobId,
       applicant: req.user._id,
-      fullName: fullName || req.user.name || '',
-      email: email || req.user.email || '',
-      phone: phone || '',
-      experience: experience || 'Fresher',
-      portfolioUrl: portfolioUrl || '',
-      coverLetter: coverLetter || '',
+      fullName: (fullName || req.user.name || '').trim(),
+      email: (email || req.user.email || '').trim().toLowerCase(),
+      phone: cleanedPhone,
+      experience: experience || 'Fresher (0-1 yr)',
+      portfolioUrl: (portfolioUrl || '').trim(),
+      coverLetter: (coverLetter || '').trim(),
       resumeUrl: finalResumeUrl,
       resumeOriginalName: finalResumeOriginalName,
       status: 'Applied'
