@@ -9,6 +9,9 @@ const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const authRoutes = require('./routes/authRoutes');
 const jobRoutes = require('./routes/jobRoutes');
 const applicationRoutes = require('./routes/applicationRoutes');
+console.log("authRoutes:", typeof authRoutes);
+console.log("jobRoutes:", typeof jobRoutes);
+console.log("applicationRoutes:", typeof applicationRoutes);
 
 const app = express();
 
