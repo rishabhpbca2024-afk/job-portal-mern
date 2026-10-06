@@ -8,11 +8,20 @@ const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 // Route files
 const authRoutes = require('./routes/authRoutes');
 const jobRoutes = require('./routes/jobRoutes');
+
 const applicationRoutesModule = require('./routes/applicationRoutes');
+
 const applicationRoutes =
-  applicationRoutesModule.default ||
-  applicationRoutesModule.router ||
-  applicationRoutesModule;
+  typeof applicationRoutesModule === 'function'
+    ? applicationRoutesModule
+    : applicationRoutesModule.default ||
+    applicationRoutesModule.router;
+
+console.log('applicationRoutes type:', typeof applicationRoutes);
+console.log(
+  'applicationRoutes keys:',
+  Object.keys(applicationRoutesModule || {})
+);
 
 const app = express();
 
