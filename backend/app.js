@@ -12,20 +12,55 @@ const applicationRoutes = require('./routes/applicationRoutes');
 
 const app = express();
 
-// 1. HTTP Security Headers (Protection against XSS, clickjacking, MIME sniffing)
+// 1. CORS Configuration at the VERY TOP (Must execute before any rate limiters or routes)
+const allowedOrigins = [
+  'https://job-hub-sss-intern1.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
+
+if (process.env.CLIENT_URL) {
+  allowedOrigins.push(process.env.CLIENT_URL);
+}
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow non-browser requests (no origin header, e.g. curl/postman)
+    if (!origin) return callback(null, true);
+    // Allow all matching origins or reflect origin safely
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Set-Cookie']
+};
+
+app.use(cors(corsOptions));
+// Handle preflight OPTIONS requests for all endpoints immediately
+app.options('*', cors(corsOptions));
+
+// PNA (Private Network Access) header for browser requests from public cloud to local machine
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Private-Network', 'true');
+  next();
+});
+
+// 2. HTTP Security Headers
 app.use(
   helmet({
-    crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allows uploaded resumes & static files to be accessed by frontend
-    contentSecurityPolicy: false // Allows dev assets without blocking
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    contentSecurityPolicy: false
   })
 );
 
-// 2. Global API Rate Limiter (Prevents DoS and brute-force flooding)
+// 3. Global API Rate Limiter (Skip preflight OPTIONS requests)
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes window
-  max: 300, // Limit each IP to 300 requests per 15 minutes
+  windowMs: 15 * 60 * 1000,
+  max: 500,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS',
   message: {
     success: false,
     message: 'Too many requests from this IP. Please try again after 15 minutes.'
@@ -33,10 +68,11 @@ const apiLimiter = rateLimit({
 });
 app.use('/api', apiLimiter);
 
-// 3. Strict Rate Limiter for Authentication endpoints (Protects against Password Brute Force)
+// 4. Strict Rate Limiter for Authentication endpoints (Skip preflight OPTIONS requests)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 30, // 30 login/register attempts per 15 mins
+  max: 50,
+  skip: (req) => req.method === 'OPTIONS',
   message: {
     success: false,
     message: 'Too many login attempts. Please wait 15 minutes before trying again.'
@@ -44,11 +80,11 @@ const authLimiter = rateLimit({
 });
 app.use('/api/auth', authLimiter);
 
-// 4. Body Parser with controlled payload size (Prevents memory exhaustion attacks)
+// 5. Body Parser with controlled payload size
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// 5. Secure Static File Serving with nosniff headers
+// 6. Secure Static File Serving with nosniff headers
 app.use(
   '/uploads',
   (req, res, next) => {
@@ -56,18 +92,6 @@ app.use(
     next();
   },
   express.static(path.join(__dirname, 'uploads'))
-);
-
-// 6. Enable CORS (Supports deployed frontend domain and local dev)
-const allowedOrigins = process.env.CLIENT_URL
-  ? [process.env.CLIENT_URL, 'http://localhost:5173']
-  : true;
-
-app.use(
-  cors({
-    origin: allowedOrigins,
-    credentials: true
-  })
 );
 
 // Health check endpoint
