@@ -58,10 +58,14 @@ app.use(
   express.static(path.join(__dirname, 'uploads'))
 );
 
-// 6. Enable CORS
+// 6. Enable CORS (Supports deployed frontend domain and local dev)
+const allowedOrigins = process.env.CLIENT_URL
+  ? [process.env.CLIENT_URL, 'http://localhost:5173']
+  : true;
+
 app.use(
   cors({
-    origin: '*',
+    origin: allowedOrigins,
     credentials: true
   })
 );
