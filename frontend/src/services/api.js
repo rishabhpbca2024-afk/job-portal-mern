@@ -1,9 +1,19 @@
 import axios from 'axios';
 
-// Automatically use VITE_API_URL if configured; otherwise use localhost in dev, or relative '/api' in production
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  (import.meta.env.DEV ? 'http://localhost:5000/api' : '/api');
+// Normalize API base URL (handles with or without /api, trailing slashes, or default)
+const getBaseUrl = () => {
+  let envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl && typeof envUrl === 'string') {
+    envUrl = envUrl.trim().replace(/\/+$/, '');
+    if (/^https?:\/\//i.test(envUrl) && !envUrl.endsWith('/api')) {
+      return `${envUrl}/api`;
+    }
+    return envUrl;
+  }
+  return import.meta.env.DEV ? 'http://localhost:5000/api' : '/api';
+};
+
+export const API_BASE_URL = getBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,

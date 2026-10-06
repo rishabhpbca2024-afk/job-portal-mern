@@ -9,21 +9,12 @@ const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const authRoutes = require('./routes/authRoutes');
 const jobRoutes = require('./routes/jobRoutes');
 
-const applicationRoutesModule = require('./routes/applicationRoutes');
-
-const applicationRoutes =
-  typeof applicationRoutesModule === 'function'
-    ? applicationRoutesModule
-    : applicationRoutesModule.default ||
-    applicationRoutesModule.router;
-
-console.log('applicationRoutes type:', typeof applicationRoutes);
-console.log(
-  'applicationRoutes keys:',
-  Object.keys(applicationRoutesModule || {})
-);
+const applicationRoutes = require('./routes/applicationRoutes');
 
 const app = express();
+
+// Trust reverse proxy (essential for Render, Vercel, Heroku, AWS for rate-limiting and protocol detection)
+app.set('trust proxy', 1);
 
 // 1. CORS Configuration at the VERY TOP (Must execute before any rate limiters or routes)
 const allowedOrigins = [
@@ -33,14 +24,30 @@ const allowedOrigins = [
 ];
 
 if (process.env.CLIENT_URL) {
-  allowedOrigins.push(process.env.CLIENT_URL);
+  process.env.CLIENT_URL.split(',').forEach((origin) => {
+    const trimmed = origin.trim().replace(/\/+$/, '');
+    if (trimmed && !allowedOrigins.includes(trimmed)) {
+      allowedOrigins.push(trimmed);
+    }
+  });
 }
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow non-browser requests (no origin header, e.g. curl/postman)
+    // Allow non-browser requests (no origin header, e.g. curl/postman/server-to-server)
     if (!origin) return callback(null, true);
-    // Allow all matching origins or reflect origin safely
+
+    // Allow configured origins, any vercel deployment (*.vercel.app), or localhost in development
+    const isAllowed =
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('.vercel.app') ||
+      origin.startsWith('http://localhost:');
+
+    if (isAllowed) {
+      return callback(null, true);
+    }
+
+    // Dynamic origin fallback (reflects requester with credentials safely)
     return callback(null, true);
   },
   credentials: true,
@@ -107,11 +114,19 @@ app.use(
   express.static(path.join(__dirname, 'uploads'))
 );
 
-// Health check endpoint
+// Health check endpoints
 app.get('/', (req, res) => {
   res.status(200).json({
     success: true,
     message: '💼 Job Hub API is running smoothly and securely!'
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    status: 'healthy',
+    timestamp: new Date().toISOString()
   });
 });
 
